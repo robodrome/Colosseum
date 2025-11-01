@@ -16,7 +16,7 @@ Moving forward, we are now using Unreal Engine 5 version 5.03 or greater! If you
 want to use UE4.27, you can use the branch `ue4.27`.
   
 ## Unreal Engine Version for Main Branch
-The main branch of this repository **only** supports Unreal Engine 5.2! Please see our other branches
+The main branch of this repository **only** supports **Unreal Engine 5.6**! Please see our other branches
 for other versions that we support.
   
 ## Currently Supported Operating Systems
@@ -32,9 +32,9 @@ Below are the list of officially supported Operating Systems, with full Unreal E
   
 **NOTE** Ubuntu 22.04 is not currently supported due to Vulkan support. If this changes, we will notify you here. If you want to use Colosseum on 22.04, we highly recommend that you use Docker.
 
-### MacOS (Non-M1 Macs only)
-- MacOS Monterey (12)
-- MacOS (11)
+### MacOS (Experimental)
+- MacOS Ventura (14)
+- MacOS Monterey (13)
   
 **NOTE** MacOS support is highly experimental and may be dropped in future releases. This is because Apple continually changes their build tools and doesn't like 3rd party developers in general. There are ongoing discussions to remove this support.
 
