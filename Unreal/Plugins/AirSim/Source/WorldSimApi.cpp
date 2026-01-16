@@ -9,6 +9,8 @@
 #include "Runtime/Engine/Classes/Engine/Engine.h"
 #include "Misc/OutputDeviceNull.h"
 #include "ImageUtils.h"
+#include "Engine/Blueprint.h"
+#include "AssetRegistry/AssetData.h"
 #include <cstdlib>
 #include <ctime>
 #include <algorithm>
