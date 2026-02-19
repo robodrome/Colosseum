@@ -42,6 +42,7 @@ public class AirSim : ModuleRules
 
     private void SetupCompileMode(CompileMode mode, ReadOnlyTargetRules Target)
     {
+        // deps die altijd nodig zijn
         LoadAirSimDependency(Target, "MavLinkCom", "MavLinkCom");
 
         switch (mode)
@@ -59,19 +60,20 @@ public class AirSim : ModuleRules
                 break;
 
             case CompileMode.CppCompileNoRpc:
-                LoadAirSimDependency(Target, "MavLinkCom", "MavLinkCom");
                 PublicDefinitions.Add("AIRLIB_NO_RPC=1");
+                AddLibDependency("AirLib", Path.Combine(AirLibPath, "lib"), "AirLib", Target, false);
                 break;
 
             case CompileMode.CppCompileWithRpc:
+                AddLibDependency("AirLib", Path.Combine(AirLibPath, "lib"), "AirLib", Target, false);
                 LoadAirSimDependency(Target, "rpclib", "rpc");
                 break;
 
             default:
                 throw new System.Exception("CompileMode specified in plugin's Build.cs file is not recognized");
         }
-
     }
+
 
     public AirSim(ReadOnlyTargetRules Target) : base(Target)
     {
@@ -106,13 +108,6 @@ public class AirSim : ModuleRules
             PublicAdditionalLibraries.Add("dinput8.lib");
             PublicAdditionalLibraries.Add("dxguid.lib");
         }
-
-        if (Target.Platform == UnrealTargetPlatform.Linux)
-        {
-            // needed when packaging
-            PublicAdditionalLibraries.Add("stdc++");
-            PublicAdditionalLibraries.Add("supc++");
-        }
     }
 
     static void CopyFileIfNewer(string srcFilePath, string destFolder)
@@ -134,30 +129,43 @@ public class AirSim : ModuleRules
 
     private bool AddLibDependency(string LibName, string LibPath, string LibFileName, ReadOnlyTargetRules Target, bool IsAddLibInclude)
     {
-        string PlatformString = (Target.Platform == UnrealTargetPlatform.Win64 || Target.Platform == UnrealTargetPlatform.Mac) ? "x64" : "x86";
-        string ConfigurationString = (Target.Configuration == UnrealTargetConfiguration.Debug && Target.Type == TargetType.Editor) ? "Debug" : "Release";
         bool isLibrarySupported = false;
-
 
         if (Target.Platform == UnrealTargetPlatform.Win64)
         {
             isLibrarySupported = true;
-
-            PublicAdditionalLibraries.Add(Path.Combine(LibPath, PlatformString, ConfigurationString, LibFileName + ".lib"));
+            PublicAdditionalLibraries.Add(
+                Path.Combine(LibPath, "x64", "Release", LibFileName + ".lib")
+            );
         }
         else if (Target.Platform == UnrealTargetPlatform.Linux || Target.Platform == UnrealTargetPlatform.Mac)
         {
             isLibrarySupported = true;
-            PublicAdditionalLibraries.Add(Path.Combine(LibPath, "lib" + LibFileName + ".a"));
+
+            string FullLibPath;
+
+            // AirLib zelf zit in x64/Release
+            if (LibName == "AirLib")
+            {
+                FullLibPath = Path.Combine(LibPath, "x64", "Release", "lib" + LibFileName + ".a");
+            }
+            else
+            {
+                // rpclib en MavLinkCom zitten direct in lib/
+                FullLibPath = Path.Combine(LibPath, "lib" + LibFileName + ".a");
+            }
+
+            PublicAdditionalLibraries.Add(FullLibPath);
         }
 
         if (isLibrarySupported && IsAddLibInclude)
         {
-            // Include path
             PublicIncludePaths.Add(Path.Combine(AirLibPath, "deps", LibName, "include"));
         }
-        PublicDefinitions.Add(string.Format("WITH_" + LibName.ToUpper() + "_BINDING={0}", isLibrarySupported ? 1 : 0));
 
+        PublicDefinitions.Add($"WITH_{LibName.ToUpper()}_BINDING={(isLibrarySupported ? 1 : 0)}");
         return isLibrarySupported;
     }
+
+
 }

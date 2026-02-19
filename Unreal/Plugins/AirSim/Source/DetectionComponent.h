@@ -12,6 +12,12 @@
 USTRUCT()
 struct FDetectionInfo
 {
+    FDetectionInfo()
+        : Actor(nullptr)
+        , Box2D(ForceInit)
+    {
+    }
+
     GENERATED_BODY()
 
     UPROPERTY()

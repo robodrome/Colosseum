@@ -28,32 +28,29 @@ rsync -a --delete MavLinkCom/include AirLib/deps/MavLinkCom
 rsync -a --delete AirLib Unreal/Plugins/AirSim/Source
 rm -rf Unreal/Plugins/AirSim/Source/AirLib/src
 
-# Update all environment projects 
-for d in ~/Documents/Unreal\ Projects/*; do
-    # Skip if not a directory
-    [ -d "$d" ] || continue
-    # Skip if symbolic link
-    [ -L "${d%/}" ] && continue
-
-    # Execute clean.sh if it exists and is executable
-    if [ -x "$d/clean.sh" ]; then
-        "$d/clean.sh"
-    fi
-
-    # Ensure Plugins directory exists
-    mkdir -p "$d/Plugins"
-
-    # Sync AirSim plugin into Plugins directory
-    rsync -a --delete Unreal/Plugins/AirSim/ "$d/Plugins/AirSim/"
-done
+# DO NOT auto-install into all Unreal projects anymore
 
 echo ""
 echo ""
 echo "=================================================================="
-echo " Colosseum plugin is built! Here's how to build Unreal project."
+echo " Colosseum plugin built successfully."
 echo "=================================================================="
-echo "All environments under Unreal/Environments have been updated."
 echo ""
-echo "For further info see the docs:"
-echo "https://codexlabsllc.github.io/Colosseum/build_linux/"
+echo "The AirSim plugin is located at:"
+echo ""
+echo "  $(pwd)/Unreal/Plugins/AirSim"
+echo ""
+echo "To use it in a specific Unreal project:"
+echo ""
+echo "Option 1: Copy plugin into your project:"
+echo ""
+echo "  cp -r Unreal/Plugins/AirSim \\"
+echo "    ~/Documents/Unreal\\ Projects/<YourProject>/Plugins/"
+echo ""
+echo "Option 2 (Recommended): Create symbolic link:"
+echo ""
+echo "  ln -s $(pwd)/Unreal/Plugins/AirSim \\"
+echo "    ~/Documents/Unreal\\ Projects/<YourProject>/Plugins/AirSim"
+echo ""
+echo "Then rebuild your Unreal project."
 echo "=================================================================="
