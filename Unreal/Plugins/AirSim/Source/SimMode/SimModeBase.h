@@ -187,6 +187,11 @@ private:
     ULoadingScreenWidget* loading_screen_widget_;
 
     UPROPERTY()
+    TSubclassOf<UUserWidget> LoadingScreenClass;
+    UPROPERTY()
+    UUserWidget* LoadingScreenWidget = nullptr;
+
+    UPROPERTY()
     AActor* sky_sphere_;
     UPROPERTY()
     ADirectionalLight* sun_;

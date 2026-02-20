@@ -57,13 +57,13 @@ ASimModeBase::ASimModeBase()
     static ConstructorHelpers::FClassFinder<AActor> sky_sphere_class(TEXT("Blueprint'/Engine/EngineSky/BP_Sky_Sphere'"));
     sky_sphere_class_ = sky_sphere_class.Succeeded() ? sky_sphere_class.Class : nullptr;
 
-    static ConstructorHelpers::FClassFinder<UUserWidget> loading_screen_class_find(TEXT("WidgetBlueprint'/AirSim/Blueprints/BP_LoadingScreenWidget'"));
-    if (loading_screen_class_find.Succeeded()) {
-        auto loading_screen_class = loading_screen_class_find.Class;
-        loading_screen_widget_ = CreateWidget<ULoadingScreenWidget>(this->GetWorld(), loading_screen_class);
+    static ConstructorHelpers::FClassFinder<UUserWidget> LoadingWidgetBP(
+        TEXT("WidgetBlueprint'/AirSim/Blueprints/BP_LoadingScreenWidget'"));
+
+    if (LoadingWidgetBP.Succeeded()) {
+        LoadingScreenClass = LoadingWidgetBP.Class;
     }
-    else
-        loading_screen_widget_ = nullptr;
+
     static ConstructorHelpers::FObjectFinder<UMaterial> domain_rand_mat_finder(TEXT("Material'/AirSim/HUDAssets/DomainRandomizationMaterial.DomainRandomizationMaterial'"));
     if (domain_rand_mat_finder.Succeeded()) {
         domain_rand_material_ = domain_rand_mat_finder.Object;
@@ -72,17 +72,17 @@ ASimModeBase::ASimModeBase()
 
 void ASimModeBase::toggleLoadingScreen(bool is_visible)
 {
-    if (loading_screen_widget_ == nullptr)
+    if (LoadingScreenWidget == nullptr)
         return;
-    else {
-        UAirBlueprintLib::RunCommandOnGameThread([this, is_visible]() {
-            if (is_visible)
-                loading_screen_widget_->SetVisibility(ESlateVisibility::Visible);
-            else
-                loading_screen_widget_->SetVisibility(ESlateVisibility::Hidden);
-        },
-                                                 true);
-    }
+
+    UAirBlueprintLib::RunCommandOnGameThread([this, is_visible]() {
+        if (LoadingScreenWidget) {
+            LoadingScreenWidget->SetVisibility(
+                is_visible ? ESlateVisibility::Visible
+                           : ESlateVisibility::Hidden);
+        }
+    },
+                                             true);
 }
 
 void ASimModeBase::BeginPlay()
@@ -112,7 +112,8 @@ void ASimModeBase::BeginPlay()
     player_loc = player_start_transform.GetLocation();
     // Move the world origin to the player's location (this moves the coordinate system and adds
     // a corresponding offset to all positions to compensate for the shift)
-    this->GetWorld()->SetNewWorldOrigin(FIntVector(player_loc) + this->GetWorld()->OriginLocation);
+    // This seems to crash 5.7.2
+    // this->GetWorld()->SetNewWorldOrigin(FIntVector(player_loc) + this->GetWorld()->OriginLocation);
     // Regrab the player's position after the offset has been added (which should be 0,0,0 now)
     player_start_transform = fpv_pawn->GetActorTransform();
     global_ned_transform_.reset(new NedTransform(player_start_transform,
@@ -153,8 +154,18 @@ void ASimModeBase::BeginPlay()
     }
     UAirBlueprintLib::GenerateActorMap(this, scene_object_map);
 
-    loading_screen_widget_->AddToViewport();
-    loading_screen_widget_->SetVisibility(ESlateVisibility::Hidden);
+    if (LoadingScreenClass) {
+        APlayerController* PC = GetWorld() ? GetWorld()->GetFirstPlayerController() : nullptr;
+
+        if (PC) {
+            LoadingScreenWidget = CreateWidget<UUserWidget>(PC, LoadingScreenClass);
+
+            if (LoadingScreenWidget) {
+                LoadingScreenWidget->AddToViewport();
+                LoadingScreenWidget->SetVisibility(ESlateVisibility::Hidden);
+            }
+        }
+    }
 }
 
 const NedTransform& ASimModeBase::getGlobalNedTransform()
@@ -453,8 +464,8 @@ void ASimModeBase::initializeCameraDirector(const FTransform& camera_transform, 
         camera_spawn_params.SpawnCollisionHandlingOverride = ESpawnActorCollisionHandlingMethod::AdjustIfPossibleButAlwaysSpawn;
         camera_spawn_params.Name = "CameraDirector";
         CameraDirector = this->GetWorld()->SpawnActor<ACameraManager>(camera_director_class_,
-                                                                       camera_transform,
-                                                                       camera_spawn_params);
+                                                                      camera_transform,
+                                                                      camera_spawn_params);
         CameraDirector->setFollowDistance(follow_distance);
         CameraDirector->setCameraRotationLagEnabled(false);
         //create external camera required for the director
